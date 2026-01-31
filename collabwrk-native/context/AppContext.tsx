@@ -1,11 +1,14 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { Manual, MOCK_MANUALS, MOCK_USER, User, MOCK_THREADS, Thread } from '../lib/mockData';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { useAuth0 } from 'react-native-auth0';
+import { Manual, MOCK_MANUALS, MOCK_THREADS, Thread } from '../lib/mockData';
+import { authApi, User as BackendUser } from '../app/services/api/auth';
+import { setTokenProvider } from '../app/services/api/client';
 
 type AppContextType = {
-    user: User | null;
+    user: BackendUser | null;
     isLoading: boolean;
-    login: (email: string) => void;
-    logout: () => void;
+    login: () => Promise<void>;
+    logout: () => Promise<void>;
     manuals: Manual[];
     importManual: (metadata: { title: string; category: string; fileName: string }) => void;
     activeManual: Manual | null;
@@ -18,19 +21,80 @@ type AppContextType = {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const { authorize, clearSession, user: auth0User, getCredentials, isLoading: isAuthLoading } = useAuth0();
+    const [user, setUser] = useState<BackendUser | null>(null);
+    const [isAppLoading, setIsAppLoading] = useState(false);
     const [manuals, setManuals] = useState<Manual[]>(MOCK_MANUALS);
     const [activeManual, setActiveManual] = useState<Manual | null>(null);
     const [threads, setThreads] = useState<Thread[]>(MOCK_THREADS);
     const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
 
-    const login = (email: string) => {
-        setUser(MOCK_USER);
+    // Configure token provider for API client
+    useEffect(() => {
+        setTokenProvider(async () => {
+            try {
+                const credentials = await getCredentials();
+                return credentials?.accessToken || null;
+            } catch (e) {
+                console.log('Error getting token', e);
+                return null;
+            }
+        });
+    }, [getCredentials]);
+
+    // Sync user with backend
+    useEffect(() => {
+        const syncUser = async () => {
+            if (auth0User) {
+                setIsAppLoading(true);
+                try {
+                    // Check if token works and get user
+                    const dbUser = await authApi.getCurrentUser();
+                    setUser(dbUser);
+                } catch (error) {
+                    console.log('Error fetching user, trying register', error);
+                    // If 404/error, try to register
+                    if (auth0User.sub && auth0User.name && auth0User.email) {
+                        try {
+                            const newUser = await authApi.register({
+                                auth0_id: auth0User.sub,
+                                email: auth0User.email,
+                                first_name: auth0User.given_name || auth0User.name.split(' ')[0] || 'User',
+                                last_name: auth0User.family_name || auth0User.name.split(' ')[1] || '',
+                            });
+                            setUser(newUser);
+                        } catch (regError) {
+                            console.error('Registration failed', regError);
+                        }
+                    }
+                } finally {
+                    setIsAppLoading(false);
+                }
+            } else {
+                setUser(null);
+            }
+        };
+
+        if (auth0User) {
+            syncUser();
+        }
+    }, [auth0User]);
+
+    const login = async () => {
+        try {
+            await authorize({ scope: 'openid profile email offline_access' });
+        } catch (e) {
+            console.log(e);
+        }
     };
 
-    const logout = () => {
-        setUser(null);
+    const logout = async () => {
+        try {
+            await clearSession();
+            setUser(null);
+        } catch (e) {
+            console.log(e);
+        }
     };
 
     const importManual = (metadata: { title: string; category: string; fileName: string }) => {
@@ -50,7 +114,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return (
         <AppContext.Provider value={{
             user,
-            isLoading,
+            isLoading: isAuthLoading || isAppLoading,
             login,
             logout,
             manuals,

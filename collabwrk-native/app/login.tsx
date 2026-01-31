@@ -1,24 +1,22 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useApp } from '@/context/AppContext';
 import { useRouter } from 'expo-router';
 import { Building2, ArrowRight } from 'lucide-react-native';
 
 export default function LoginScreen() {
-    const { login, colorScheme } = useApp();
+    const { login, user, isLoading, colorScheme } = useApp();
     const router = useRouter();
-    const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(false);
     const isDark = colorScheme === 'dark';
 
-    const handleLogin = () => {
-        setLoading(true);
-        // Simulate network delay
-        setTimeout(() => {
-            login(email);
-            setLoading(false);
+    useEffect(() => {
+        if (user) {
             router.replace('/(tabs)');
-        }, 800);
+        }
+    }, [user]);
+
+    const handleLogin = () => {
+        login();
     };
 
     return (
@@ -32,46 +30,25 @@ export default function LoginScreen() {
             </View>
 
             <View className="space-y-6 w-full">
-                <View>
-                    <Text className={`text-xs font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Work Email</Text>
-                    <TextInput
-                        value={email}
-                        onChangeText={setEmail}
-                        placeholder="technician@company.com"
-                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-                        className={`w-full h-14 rounded-xl border px-4 text-base shadow-sm ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'}`}
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                    />
-                </View>
-
-                <View className="mb-4">
-                    <Text className={`text-xs font-bold uppercase mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Password</Text>
-                    <TextInput
-                        placeholder="••••••••"
-                        placeholderTextColor={isDark ? '#64748b' : '#94a3b8'}
-                        className={`w-full h-14 rounded-xl border px-4 text-base shadow-sm ${isDark ? 'bg-slate-800 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'}`}
-                        secureTextEntry
-                    />
+                <View className="items-center mb-8">
+                    <Text className={`text-center mb-4 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                        Sign in to access manuals, community knowledge, and AI assistance.
+                    </Text>
                 </View>
 
                 <TouchableOpacity
                     onPress={handleLogin}
-                    disabled={loading}
+                    disabled={isLoading}
                     className="w-full h-14 bg-blue-900 rounded-xl flex-row items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
                 >
-                    {loading ? (
+                    {isLoading ? (
                         <ActivityIndicator color="white" />
                     ) : (
                         <>
-                            <Text className="text-white font-bold text-lg">Sign In</Text>
+                            <Text className="text-white font-bold text-lg">Sign In / Register</Text>
                             <ArrowRight size={20} color="white" />
                         </>
                     )}
-                </TouchableOpacity>
-
-                <TouchableOpacity className="items-center mt-4">
-                    <Text className="text-orange-600 font-semibold">Join with Company Code</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>

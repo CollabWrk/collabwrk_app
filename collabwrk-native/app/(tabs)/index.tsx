@@ -39,12 +39,47 @@ export default function LibraryScreen() {
     importManual(metadata);
   };
 
+  // ...
   const handleManualPress = (manual: Manual) => {
     setActiveManual(manual);
     // Navigate to detail page
     // @ts-ignore - Expo router dynamic routes
     router.push(`/manual/${manual.id}`);
   };
+
+  const { user } = useApp();
+
+  if (user && !user.company_id) {
+    return (
+      <SafeAreaView className={`flex-1 items-center justify-center p-6 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
+        <View className="items-center max-w-sm">
+          <View className="mb-6 bg-blue-100 dark:bg-blue-900 p-6 rounded-full">
+            <Text className="text-4xl">🏢</Text>
+          </View>
+          <Text className={`text-2xl font-bold mb-2 text-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+            Join a Company
+          </Text>
+          <Text className={`text-center mb-8 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            You need to be part of a company workspace to manage manuals and access AI features.
+          </Text>
+
+          <Pressable
+            className="w-full bg-blue-600 py-4 rounded-xl items-center mb-4"
+            onPress={() => router.push('/company/join')}
+          >
+            <Text className="text-white font-bold text-lg">Join Existing Team</Text>
+          </Pressable>
+
+          <Pressable
+            className="w-full border border-blue-600 py-4 rounded-xl items-center"
+            onPress={() => router.push('/company/create')}
+          >
+            <Text className="text-blue-600 dark:text-blue-400 font-bold text-lg">Create New Company</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className={`flex-1 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>

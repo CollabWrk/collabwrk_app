@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, TextInput, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useApp } from '@/context/AppContext';
+import { aiApi } from '../../services/api/ai';
 import { ChevronLeft, Search, Bookmark, MoreHorizontal, ChevronRight, Sparkles, X, FileText, ArrowUp } from 'lucide-react-native';
 import { MOCK_AI_RESPONSES } from '@/lib/mockData';
 
@@ -96,19 +97,58 @@ function AIBottomSheet({ isOpen, onClose, model }: { isOpen: boolean, onClose: (
     const [messages, setMessages] = useState<{ type: 'user' | 'ai', content: string, citations?: string[] }[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!query.trim()) return;
         const userMsg = query;
         setMessages(prev => [...prev, { type: 'user', content: userMsg }]);
         setQuery("");
         setLoading(true);
 
-        setTimeout(() => {
-            const key = userMsg.toLowerCase().includes('wiring') ? 'wiring' : 'default';
-            const response = MOCK_AI_RESPONSES[key];
-            setMessages(prev => [...prev, { type: 'ai', content: response.answer, citations: response.citations }]);
+        try {
+            // Simulate local retrieval (RAG) by selecting relevant mock chunks
+            // In real app, this would query local vector DB or text search
+            const mockChunks = [
+                {
+                    chunk_id: "chk_1",
+                    text: "Error E14 indicates a pressure sensor fault. Check connection J3 and ensure pressure is within range (2-4 bar). If persistent, replace sensor part #PN-123.",
+                    page_start: 45,
+                    page_end: 45
+                },
+                {
+                    chunk_id: "chk_2",
+                    text: "Wiring Diagram: Blue wire connects to Neutral (N). Brown wire connects to Live (L). Earth (Green/Yellow) must be connected to chassis.",
+                    page_start: 12,
+                    page_end: 12
+                },
+                {
+                    chunk_id: "chk_3",
+                    text: "Maintenance: Clean filters every 500 hours. Replace oil every 2000 hours.",
+                    page_start: 88,
+                    page_end: 89
+                }
+            ];
+
+            const response = await aiApi.askManual({
+                question: userMsg,
+                manual_fingerprint: "mock_fingerprint_123",
+                chunks: mockChunks,
+                model_numbers: [model]
+            });
+
+            setMessages(prev => [...prev, {
+                type: 'ai',
+                content: response.answer,
+                citations: response.citations.map(c => `Pg ${c.page_start}`)
+            }]);
+        } catch (error) {
+            console.error('AI Error', error);
+            setMessages(prev => [...prev, {
+                type: 'ai',
+                content: "Sorry, I encountered an error connecting to the AI service. Please try again."
+            }]);
+        } finally {
             setLoading(false);
-        }, 1500);
+        }
     };
 
     return (

@@ -34,10 +34,19 @@ function RootLayoutNav() {
   );
 }
 
+import { Auth0Provider } from 'react-native-auth0';
+
+// ...
+
 export default function RootLayout() {
   return (
-    <AppProvider>
-      <RootLayoutNav />
-    </AppProvider>
+    <Auth0Provider
+      domain={process.env.EXPO_PUBLIC_AUTH0_DOMAIN || 'PLACEHOLDER_DOMAIN'}
+      clientId={process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID || 'PLACEHOLDER_CLIENT_ID'}
+    >
+      <AppProvider>
+        <RootLayoutNav />
+      </AppProvider>
+    </Auth0Provider>
   );
 }
