@@ -26,4 +26,4 @@ class User(Base):
 
     # Relationships
     company = relationship("Company", back_populates="users")
-    seat = relationship("Seat", back_populates="user")
+    seat = relationship("Seat", foreign_keys=[seat_id])

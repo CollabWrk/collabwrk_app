@@ -5,7 +5,14 @@ from app.config import get_settings
 from app.schemas.ai import ManualChunk, AIAnswer, Citation, SuggestedFault
 
 settings = get_settings()
-client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+client = AsyncOpenAI(
+    base_url=settings.OPENAI_BASE_URL,
+    api_key=settings.OPENROUTER_API_KEY,
+    default_headers={
+        "HTTP-Referer": "https://collabwrk.app", # Optional, for including your app on openrouter.ai rankings.
+        "X-Title": "CollabWrk", # Optional. Shows in rankings on openrouter.ai.
+    }
+)
 
 async def generate_answer(question: str, chunks: List[ManualChunk], model_numbers: List[str]) -> AIAnswer:
     # Format chunks for the prompt
@@ -44,7 +51,7 @@ async def generate_answer(question: str, chunks: List[ManualChunk], model_number
     
     try:
         response = await client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+            model=settings.AI_MODEL_NAME,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}

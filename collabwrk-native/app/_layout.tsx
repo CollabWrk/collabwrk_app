@@ -17,8 +17,37 @@ export const unstable_settings = {
   initialRouteName: 'login',
 };
 
+import { useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
+import { useSegments, useRouter } from 'expo-router';
+
 function RootLayoutNav() {
-  const { colorScheme } = useApp();
+  const { colorScheme, user, isLoading } = useApp();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inTabsGroup = segments[0] === '(tabs)';
+    const onLogin = segments[0] === 'login';
+
+    if (!user && !onLogin) {
+      // Redirect to the login page if not authenticated
+      router.replace('/login');
+    } else if (user && onLogin) {
+      // Redirect to the tabs page if authenticated
+      router.replace('/(tabs)');
+    }
+  }, [user, segments, isLoading]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>

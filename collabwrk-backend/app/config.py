@@ -16,12 +16,15 @@ class Settings(BaseSettings):
     AUTH0_DOMAIN: str
     AUTH0_API_AUDIENCE: str
     
-    # OpenAI
-    OPENAI_API_KEY: str
+    # OpenRouter
+    OPENROUTER_API_KEY: str
+    OPENAI_BASE_URL: str = "https://openrouter.ai/api/v1"
+    AI_MODEL_NAME: str = "openai/gpt-4-turbo-preview"
     
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 @lru_cache()
 def get_settings():

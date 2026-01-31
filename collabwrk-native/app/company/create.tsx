@@ -1,7 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, Clipboard } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { companyApi } from '../../services/api/company';
+import { companyApi } from '../services/api/company';
 import { useApp } from '../../context/AppContext';
 
 export default function CreateCompanyScreen() {

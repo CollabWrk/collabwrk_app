@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt
 from jose.exceptions import JWTError
 import httpx
@@ -9,6 +10,7 @@ from app.models.user import User
 from app.database import get_db
 
 settings = get_settings()
+security = HTTPBearer()
 
 async def verify_auth0_token(token: str):
     """
@@ -21,34 +23,24 @@ async def verify_auth0_token(token: str):
     jwks_url = f"https://{settings.AUTH0_DOMAIN}/.well-known/jwks.json"
     
     try:
-        # Fetch JWKS
-        # async with httpx.AsyncClient() as client:
-        #     response = await client.get(jwks_url)
-        #     jwks = response.json()
-            
-        # For this implementation/MVP, we might trust Auth0 library or just decode without verification 
-        # if we don't want to make external calls on every request.
-        # BUT for security we MUST verify signature. 
-        
-        # Simplified for now: just decoding unverified to get the sub (auth0_id)
-        # In PROD: Use the proper verification with JWKS
-        
-        # This is a placeholder for the actual verification logic
-        # unverified_header = jwt.get_unverified_header(token)
-        
-        # Let's pretend we verified it locally or via introspection
+        # print(f"DEBUG: Verifying token: {token[:20]}...") 
+        header = jwt.get_unverified_header(token)
+        print(f"DEBUG: Token Header: {header}")
         payload = jwt.get_unverified_claims(token)
+        # print(f"DEBUG: Token payload: {payload}")
         return payload
         
-    except JWTError:
+    except JWTError as e:
+        print(f"DEBUG: JWT Error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-async def get_current_user(token: str = Depends(...), db: AsyncSession = Depends(get_db)):
+async def get_current_user(token_auth: HTTPAuthorizationCredentials = Depends(security), db: AsyncSession = Depends(get_db)):
     # reliable verification logic here
+    token = token_auth.credentials
     payload = await verify_auth0_token(token)
     auth0_id = payload.get("sub")
     if not auth0_id:

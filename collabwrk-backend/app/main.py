@@ -4,18 +4,29 @@ from app.config import get_settings
 
 settings = get_settings()
 
+from contextlib import asynccontextmanager
+from app.database import init_db
+# Import models to register them with Base
+from app.models.user import User
+from app.models.company import Company
+from app.models.seat import Seat
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize database
+    await init_db()
+    yield
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan
 )
 
 # CORS Configuration
 origins = [
-    "http://localhost",
-    "http://localhost:8081", # React Native (Expo)
-    "http://localhost:3000",
-    "exp://localhost:19000",
+    "*", # Allow all for dev
 ]
 
 app.add_middleware(

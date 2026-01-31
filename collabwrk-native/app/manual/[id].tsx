@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, TextInput, KeyboardAvoidingView, Platform, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useApp } from '@/context/AppContext';
-import { aiApi } from '../../services/api/ai';
+import { aiApi } from '../services/api/ai';
 import { ChevronLeft, Search, Bookmark, MoreHorizontal, ChevronRight, Sparkles, X, FileText, ArrowUp } from 'lucide-react-native';
 import { MOCK_AI_RESPONSES } from '@/lib/mockData';
 

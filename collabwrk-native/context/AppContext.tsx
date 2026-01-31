@@ -34,6 +34,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTokenProvider(async () => {
             try {
                 const credentials = await getCredentials();
+                // Debug log to verify token format
+                console.log('Auth0 Token:', credentials?.accessToken?.substring(0, 20) + '...');
                 return credentials?.accessToken || null;
             } catch (e) {
                 console.log('Error getting token', e);
@@ -82,7 +84,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const login = async () => {
         try {
-            await authorize({ scope: 'openid profile email offline_access' });
+            console.log("Using Audience:", process.env.EXPO_PUBLIC_AUTH0_AUDIENCE);
+            await authorize({
+                scope: 'openid profile email offline_access',
+                redirectUrl: 'com.collabwrk.app://dev-if5glqazobmlcydc.us.auth0.com/ios/com.collabwrk.app/callback',
+                audience: process.env.EXPO_PUBLIC_AUTH0_AUDIENCE
+            });
         } catch (e) {
             console.log(e);
         }
